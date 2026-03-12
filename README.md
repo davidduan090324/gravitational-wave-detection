@@ -1,253 +1,253 @@
-# 引力波信号处理中的滤波器原理与应用
+# Filter Principles and Applications in Gravitational Wave Signal Processing
 
-![双黑洞合并引力波示意图](example.jpg)
+![Binary Black Hole Coalescence](example.jpg)
 
-*图：双黑洞合并产生引力波的示意图。两个黑洞在相互绕转的过程中，会向外辐射引力波，导致时空产生涟漪。*
+*Figure: Illustration of gravitational wave generation from binary black hole coalescence. As two black holes orbit each other, they radiate gravitational waves, creating ripples in spacetime.*
 
-## 一、引言
+## 1. Introduction
 
-引力波是时空的涟漪，由大质量天体的加速运动产生，例如双黑洞或双中子星的合并。2015年，LIGO（激光干涉引力波天文台）首次直接探测到引力波信号，开启了引力波天文学的新时代。然而，引力波信号极其微弱，探测器接收到的数据中充斥着各种噪声，包括地震噪声、热噪声、量子噪声等。因此，信号处理技术，尤其是滤波器的应用，在引力波数据分析中起着至关重要的作用。
+Gravitational waves are ripples in spacetime produced by the accelerated motion of massive celestial bodies, such as the merger of binary black holes or binary neutron stars. In 2015, LIGO (Laser Interferometer Gravitational-Wave Observatory) made the first direct detection of gravitational wave signals, opening a new era of gravitational wave astronomy. However, gravitational wave signals are extremely weak, and the data received by detectors is filled with various types of noise, including seismic noise, thermal noise, and quantum noise. Therefore, signal processing techniques, especially the application of filters, play a crucial role in gravitational wave data analysis.
 
-本文将介绍在引力波信号处理中常用的四种滤波器：带通滤波器（Bandpass Filter）、高通滤波器（Highpass Filter）、低通滤波器（Lowpass Filter）和窄带滤波器（Narrow Band Filter），分析它们的工作原理、数学基础以及在引力波探测中的具体应用。
+This article introduces four types of filters commonly used in gravitational wave signal processing: Bandpass Filter, Highpass Filter, Lowpass Filter, and Narrow Band Filter, analyzing their working principles, mathematical foundations, and specific applications in gravitational wave detection.
 
 ---
 
-## 二、滤波器的基本原理
+## 2. Basic Principles of Filters
 
-### 2.1 什么是滤波器
+### 2.1 What is a Filter
 
-滤波器是一种信号处理系统，它能够对信号中不同频率的成分进行选择性地通过或抑制。从数学角度看，滤波器是一个线性时不变系统，其作用可以用卷积或频域乘法来描述。
+A filter is a signal processing system that can selectively pass or suppress different frequency components in a signal. From a mathematical perspective, a filter is a linear time-invariant system whose action can be described by convolution or frequency domain multiplication.
 
-在频域中，任何信号都可以分解为不同频率的正弦波的叠加（傅里叶变换）。滤波器通过设定不同的频率响应函数，决定哪些频率成分被保留，哪些被衰减。
+In the frequency domain, any signal can be decomposed into a superposition of sine waves of different frequencies (Fourier Transform). Filters determine which frequency components are retained and which are attenuated by setting different frequency response functions.
 
-**时域与频域的关系**：
-- 时域：信号随时间变化的表示，$x(t)$
-- 频域：信号的频率成分表示，$X(f) = \mathcal{F}\{x(t)\}$
-- 滤波操作：$Y(f) = H(f) \cdot X(f)$，其中 $H(f)$ 是滤波器的频率响应
+**Relationship Between Time Domain and Frequency Domain**:
+- Time domain: representation of signal variation over time, $x(t)$
+- Frequency domain: representation of signal frequency components, $X(f) = \mathcal{F}\{x(t)\}$
+- Filtering operation: $Y(f) = H(f) \cdot X(f)$, where $H(f)$ is the filter's frequency response
 
-### 2.2 Butterworth 滤波器
+### 2.2 Butterworth Filter
 
-本项目中使用的是 Butterworth 滤波器，它是一种最常用的 IIR（无限脉冲响应）滤波器。Butterworth 滤波器的特点是在通带内具有**最大平坦的幅频响应**，即在通带内没有波纹，频率响应曲线非常平滑。
+This project uses the Butterworth filter, one of the most commonly used IIR (Infinite Impulse Response) filters. The Butterworth filter is characterized by having a **maximally flat magnitude response** in the passband, meaning no ripple in the passband and a very smooth frequency response curve.
 
-**Butterworth 滤波器的幅频响应函数**：
+**Butterworth Filter Magnitude Response Function**:
 
 $$|H(j\omega)|^2 = \frac{1}{1 + (\omega/\omega_c)^{2N}}$$
 
-其中：
-- $\omega_c$ 是截止频率（-3dB 点）
-- $N$ 是滤波器的阶数
-- 阶数越高，过渡带越陡峭
+Where:
+- $\omega_c$ is the cutoff frequency (-3dB point)
+- $N$ is the filter order
+- Higher order means steeper transition band
 
-**为什么选择 Butterworth**：
-1. 通带内最大平坦，不会引入额外的波动
-2. 相位响应相对线性
-3. 计算效率高
-4. SciPy 库提供了完善的实现
+**Why Choose Butterworth**:
+1. Maximally flat in passband, no additional ripple introduced
+2. Relatively linear phase response
+3. High computational efficiency
+4. SciPy library provides complete implementation
 
-### 2.3 filtfilt 零相位滤波
+### 2.3 filtfilt Zero-Phase Filtering
 
-在代码中使用的 `signal.filtfilt()` 函数实现了**零相位滤波**。它通过对信号进行两次滤波（一次正向，一次反向）来消除滤波器引入的相位延迟。
+The `signal.filtfilt()` function used in the code implements **zero-phase filtering**. It eliminates the phase delay introduced by the filter by filtering the signal twice (once forward, once backward).
 
-**工作原理**：
-1. 正向滤波：$y_1 = h * x$
-2. 反向滤波：$y_2 = h * \text{flip}(y_1)$
-3. 再次翻转：$y = \text{flip}(y_2)$
+**Working Principle**:
+1. Forward filtering: $y_1 = h * x$
+2. Backward filtering: $y_2 = h * \text{flip}(y_1)$
+3. Flip again: $y = \text{flip}(y_2)$
 
-这种方法的优点：
-- **零相位延迟**：信号的时间位置不会偏移
-- **幅度响应平方**：等效于将滤波器的幅度响应平方，过渡带更陡峭
-- **因果性**：虽然 filtfilt 是非因果的（需要整个信号），但对于离线分析非常适合
+Advantages of this method:
+- **Zero phase delay**: signal time position does not shift
+- **Squared magnitude response**: equivalent to squaring the filter's magnitude response, steeper transition band
+- **Causality**: although filtfilt is non-causal (requires entire signal), it is ideal for offline analysis
 
-这对于引力波信号分析尤为重要，因为我们需要精确地确定信号的到达时间，任何相位偏移都会影响信号定位的准确性。
+This is particularly important for gravitational wave signal analysis, as we need to precisely determine the arrival time of signals, and any phase shift would affect the accuracy of signal localization.
 
 ---
 
-## 三、四种滤波器的详细介绍
+## 3. Detailed Introduction to Four Types of Filters
 
-### 3.1 带通滤波器（Bandpass Filter, 20-500Hz）
+### 3.1 Bandpass Filter (20-500Hz)
 
-**原理**：带通滤波器只允许特定频率范围内的信号通过，同时抑制低于下限频率和高于上限频率的信号成分。它相当于高通和低通滤波器的串联组合。
+**Principle**: A bandpass filter only allows signals within a specific frequency range to pass while suppressing signal components below the lower cutoff and above the upper cutoff frequencies. It is equivalent to a series combination of highpass and lowpass filters.
 
-**频率响应特性**：
+**Frequency Response Characteristics**:
 
 ```
-幅度
+Magnitude
   |
 1 |     ___________
   |    /           \
   |   /             \
   |  /               \
 0 |_/                 \_______
-  +----+----+----+----+-----> 频率
+  +----+----+----+----+-----> Frequency
       20   100  300  500
-       下限        上限
+     Lower        Upper
 ```
 
-**数学表达**：带通滤波器的传递函数可以表示为：
+**Mathematical Expression**: The transfer function of a bandpass filter can be expressed as:
 
 $$H(s) = \frac{K \cdot s^N}{(s^2 + \frac{\omega_0}{Q}s + \omega_0^2)^{N/2}}$$
 
-其中：
-- $\omega_0$ 是中心频率
-- $Q$ 是品质因数，决定了通带的宽度
-- $K$ 是增益常数
+Where:
+- $\omega_0$ is the center frequency
+- $Q$ is the quality factor, determining the passband width
+- $K$ is the gain constant
 
-**为什么选择 20-500Hz**：
+**Why Choose 20-500Hz**:
 
-| 频率范围 | 噪声来源 | 处理方式 |
-|---------|---------|---------|
-| < 20Hz | 地震噪声、温度漂移、悬挂系统振动 | 高通滤除 |
-| 20-500Hz | **引力波信号主要频段** | 保留 |
-| > 500Hz | 量子散粒噪声、电子噪声 | 低通滤除 |
+| Frequency Range | Noise Source | Processing Method |
+|----------------|--------------|-------------------|
+| < 20Hz | Seismic noise, temperature drift, suspension system vibration | Highpass filtering |
+| 20-500Hz | **Main frequency band of gravitational wave signals** | Retain |
+| > 500Hz | Quantum shot noise, electronic noise | Lowpass filtering |
 
-**LIGO 探测器灵敏度曲线**：
-- 在低于 20Hz 的频段受到严重的地震噪声影响
-- 在 100-300Hz 附近达到最佳灵敏度
-- 高频段受量子噪声限制
+**LIGO Detector Sensitivity Curve**:
+- Severely affected by seismic noise below 20Hz
+- Reaches optimal sensitivity around 100-300Hz
+- High frequency band limited by quantum noise
 
-**应用效果**：带通滤波器能够有效提取引力波信号的主要频率成分，去除大部分环境噪声，是引力波数据处理中最基本和最重要的滤波步骤。
+**Application Effect**: Bandpass filters can effectively extract the main frequency components of gravitational wave signals and remove most environmental noise, making it the most basic and important filtering step in gravitational wave data processing.
 
 ---
 
-### 3.2 高通滤波器（Highpass Filter, 20Hz）
+### 3.2 Highpass Filter (20Hz)
 
-**原理**：高通滤波器允许高于截止频率的信号通过，同时抑制低于截止频率的信号成分。
+**Principle**: A highpass filter allows signals above the cutoff frequency to pass while suppressing signal components below the cutoff frequency.
 
-**频率响应特性**：
+**Frequency Response Characteristics**:
 
 ```
-幅度
+Magnitude
   |
 1 |          _______________
   |         /
   |        /
   |       /
 0 |______/
-  +----+----+----+----+-----> 频率
+  +----+----+----+----+-----> Frequency
       10   20   50  100
-          截止频率
+          Cutoff
 ```
 
-**数学表达**：
+**Mathematical Expression**:
 
-一阶高通滤波器的传递函数：
+First-order highpass filter transfer function:
 $$H(s) = \frac{s}{s + \omega_c}$$
 
-N 阶 Butterworth 高通滤波器的幅频响应：
+N-order Butterworth highpass filter magnitude response:
 $$|H(j\omega)|^2 = \frac{(\omega/\omega_c)^{2N}}{1 + (\omega/\omega_c)^{2N}}$$
 
-**为什么使用高通滤波**：
+**Why Use Highpass Filtering**:
 
-1. **去除直流分量**：探测器输出可能存在直流偏置
-2. **消除地震噪声**：地球的微震、交通振动、海浪等产生的低频噪声
-3. **去除悬挂系统振动**：LIGO 的镜面悬挂系统会产生低频机械振动
-4. **消除温度漂移**：长时间测量中的缓慢漂移
+1. **Remove DC component**: detector output may have DC bias
+2. **Eliminate seismic noise**: low-frequency noise from Earth's microseisms, traffic vibrations, waves, etc.
+3. **Remove suspension system vibration**: LIGO's mirror suspension system produces low-frequency mechanical vibrations
+4. **Eliminate temperature drift**: slow drift during long-term measurements
 
-**与带通的区别**：
-- 高通滤波器不限制高频成分，保留更多高频信息
-- 适用于需要分析高频成分的场景
-- 缺点是高频噪声也会被保留
+**Difference from Bandpass**:
+- Highpass filter does not limit high-frequency components, retaining more high-frequency information
+- Suitable for scenarios requiring high-frequency component analysis
+- Disadvantage is that high-frequency noise is also retained
 
 ---
 
-### 3.3 低通滤波器（Lowpass Filter, 500Hz）
+### 3.3 Lowpass Filter (500Hz)
 
-**原理**：低通滤波器允许低于截止频率的信号通过，抑制高于截止频率的信号成分。
+**Principle**: A lowpass filter allows signals below the cutoff frequency to pass while suppressing signal components above the cutoff frequency.
 
-**频率响应特性**：
+**Frequency Response Characteristics**:
 
 ```
-幅度
+Magnitude
   |
 1 |____________
   |            \
   |             \
   |              \
 0 |               \__________
-  +----+----+----+----+-----> 频率
+  +----+----+----+----+-----> Frequency
      100  300  500  700
-              截止频率
+              Cutoff
 ```
 
-**数学表达**：
+**Mathematical Expression**:
 
-N 阶 Butterworth 低通滤波器的传递函数：
+N-order Butterworth lowpass filter transfer function:
 $$H(s) = \frac{\omega_c^N}{\prod_{k=1}^{N}(s - s_k)}$$
 
-其中 $s_k$ 是滤波器的极点，位于 s 平面的左半平面。
+Where $s_k$ are the filter poles, located in the left half of the s-plane.
 
-**幅频响应**：
+**Magnitude Response**:
 $$|H(j\omega)|^2 = \frac{1}{1 + (\omega/\omega_c)^{2N}}$$
 
-**为什么使用低通滤波**：
+**Why Use Lowpass Filtering**:
 
-1. **去除高频电子噪声**：光电探测器和放大器产生的高频噪声
-2. **消除量子散粒噪声**：激光的量子涨落在高频段主导
-3. **抑制光学系统振动**：镜面的高频振动模式
-4. **平滑信号**：突出低频趋势，便于观察
+1. **Remove high-frequency electronic noise**: high-frequency noise from photodetectors and amplifiers
+2. **Eliminate quantum shot noise**: laser quantum fluctuations dominate at high frequencies
+3. **Suppress optical system vibrations**: high-frequency vibration modes of mirrors
+4. **Smooth signal**: highlight low-frequency trends for easier observation
 
-**应用场景**：
-- 分析大质量黑洞合并的早期旋进阶段（低频信号）
-- 数据降采样前的抗混叠滤波
-- 信号包络提取
+**Application Scenarios**:
+- Analyzing the early inspiral phase of massive black hole mergers (low-frequency signals)
+- Anti-aliasing filtering before data downsampling
+- Signal envelope extraction
 
 ---
 
-### 3.4 窄带滤波器（Narrow Band Filter, 30-200Hz）
+### 3.4 Narrow Band Filter (30-200Hz)
 
-**原理**：窄带滤波器是一种通带宽度较窄的带通滤波器，它只允许一个狭窄频率范围内的信号通过。
+**Principle**: A narrow band filter is a bandpass filter with a narrow passband width, allowing only signals within a narrow frequency range to pass.
 
-**频率响应特性**：
+**Frequency Response Characteristics**:
 
 ```
-幅度
+Magnitude
   |
 1 |       ____
   |      /    \
   |     /      \
   |    /        \
 0 |___/          \___________
-  +----+----+----+----+-----> 频率
+  +----+----+----+----+-----> Frequency
       30   100  200  300
-      下限       上限
+      Lower      Upper
 ```
 
-**为什么选择 30-200Hz**：
+**Why Choose 30-200Hz**:
 
-1. **信号最强区域**：恒星质量双黑洞合并的 chirp 信号在这个频段最强
-2. **探测器最佳灵敏度**：LIGO 在 50-200Hz 范围内灵敏度最高
-3. **信噪比最优**：集中分析核心频段可以最大化信噪比
-4. **Chirp 信号特性**：合并前的最后几个周期主要集中在这个频段
+1. **Strongest signal region**: chirp signals from stellar-mass binary black hole mergers are strongest in this band
+2. **Optimal detector sensitivity**: LIGO has highest sensitivity in the 50-200Hz range
+3. **Optimal SNR**: focusing analysis on the core band maximizes signal-to-noise ratio
+4. **Chirp signal characteristics**: the last few cycles before merger are mainly concentrated in this band
 
-**品质因数 Q**：
+**Quality Factor Q**:
 
-窄带滤波器的一个重要参数是品质因数 Q：
-$$Q = \frac{f_0}{\Delta f} = \frac{\text{中心频率}}{\text{带宽}}$$
+An important parameter for narrow band filters is the quality factor Q:
+$$Q = \frac{f_0}{\Delta f} = \frac{\text{Center Frequency}}{\text{Bandwidth}}$$
 
-| Q 值 | 带宽特性 | 应用场景 |
-|-----|---------|---------|
-| < 1 | 宽带 | 宽频信号分析 |
-| 1-10 | 中等 | 一般带通滤波 |
-| > 10 | 窄带 | 特定频率提取 |
+| Q Value | Bandwidth Characteristic | Application Scenario |
+|---------|------------------------|---------------------|
+| < 1 | Wideband | Broadband signal analysis |
+| 1-10 | Medium | General bandpass filtering |
+| > 10 | Narrowband | Specific frequency extraction |
 
-**与宽带带通的对比**：
+**Comparison with Wideband Bandpass**:
 
-| 特性 | 宽带带通 (20-500Hz) | 窄带 (30-200Hz) |
-|-----|-------------------|----------------|
-| 带宽 | 480Hz | 170Hz |
-| 信噪比 | 中等 | 较高 |
-| 信息保留 | 完整 | 可能损失边缘信息 |
-| 噪声抑制 | 一般 | 更强 |
+| Characteristic | Wideband Bandpass (20-500Hz) | Narrowband (30-200Hz) |
+|---------------|------------------------------|----------------------|
+| Bandwidth | 480Hz | 170Hz |
+| SNR | Medium | Higher |
+| Information Retention | Complete | May lose edge information |
+| Noise Suppression | Moderate | Stronger |
 
 ---
 
-## 四、窗函数的作用
+## 4. Role of Window Functions
 
-### 4.1 Tukey 窗（余弦锥形窗）
+### 4.1 Tukey Window (Cosine-Tapered Window)
 
-在代码中使用了 Tukey 窗函数。Tukey 窗是矩形窗和汉宁窗的折中。
+The code uses the Tukey window function. The Tukey window is a compromise between the rectangular window and the Hanning window.
 
-**数学定义**：
+**Mathematical Definition**:
 
 $$w(n) = \begin{cases} 
 \frac{1}{2}\left[1 + \cos\left(\pi\left(\frac{2n}{\alpha(N-1)} - 1\right)\right)\right] & 0 \leq n < \frac{\alpha(N-1)}{2} \\
@@ -255,31 +255,31 @@ $$w(n) = \begin{cases}
 \frac{1}{2}\left[1 + \cos\left(\pi\left(\frac{2n}{\alpha(N-1)} - \frac{2}{\alpha} + 1\right)\right)\right] & (N-1)(1-\frac{\alpha}{2}) < n \leq N-1
 \end{cases}$$
 
-**参数 α 的影响**：
+**Effect of Parameter α**:
 
-| α 值 | 窗函数类型 | 特性 |
-|-----|----------|-----|
-| 0 | 矩形窗 | 无衰减，频谱泄漏严重 |
-| 0.1-0.3 | Tukey 窗 | 边缘轻微衰减，平衡性好 |
-| 1 | 汉宁窗 | 全程余弦衰减，频谱泄漏小 |
+| α Value | Window Type | Characteristics |
+|---------|-------------|-----------------|
+| 0 | Rectangular window | No attenuation, severe spectral leakage |
+| 0.1-0.3 | Tukey window | Slight edge attenuation, good balance |
+| 1 | Hanning window | Full cosine attenuation, small spectral leakage |
 
-### 4.2 为什么需要窗函数
+### 4.2 Why Window Functions Are Needed
 
-**频谱泄漏问题**：
-- 对有限长度信号进行傅里叶变换时，相当于用矩形窗截断信号
-- 截断会导致频谱出现旁瓣，影响频率分析的准确性
+**Spectral Leakage Problem**:
+- When performing Fourier transform on finite-length signals, it's equivalent to truncating the signal with a rectangular window
+- Truncation causes sidelobes in the spectrum, affecting the accuracy of frequency analysis
 
-**窗函数的作用**：
-1. 平滑信号的边缘，减少截断效应
-2. 减少滤波器的边缘效应
-3. 提高频谱估计的稳定性
-4. 抑制频谱泄漏
+**Functions of Window Functions**:
+1. Smooth signal edges, reduce truncation effects
+2. Reduce filter edge effects
+3. Improve stability of spectral estimation
+4. Suppress spectral leakage
 
 ---
 
-## 五、代码实现分析
+## 5. Code Implementation Analysis
 
-### 5.1 滤波器配置
+### 5.1 Filter Configuration
 
 ```python
 FILTER_CONFIGS = {
@@ -311,36 +311,36 @@ FILTER_CONFIGS = {
 }
 ```
 
-**参数解释**：
-- `N=4`：4 阶 Butterworth 滤波器，提供适中的过渡带陡度
-- `Wn`：截止频率，单位 Hz（因为指定了 `fs`）
-- `btype`：滤波器类型
-- `fs=2048`：采样频率 2048Hz（LIGO 数据的典型采样率）
+**Parameter Explanation**:
+- `N=4`: 4th order Butterworth filter, providing moderate transition band steepness
+- `Wn`: cutoff frequency in Hz (because `fs` is specified)
+- `btype`: filter type
+- `fs=2048`: sampling frequency 2048Hz (typical sampling rate for LIGO data)
 
-### 5.2 滤波函数实现
+### 5.2 Filter Function Implementation
 
 ```python
 def apply_filter(wave, filter_type='bandpass'):
-    """应用滤波器，保留信号特征"""
-    # 原始信号直接归一化返回
+    """Apply filter while preserving signal characteristics"""
+    # Raw signal directly normalized and returned
     if filter_type == 'raw':
         normalized = wave / (np.max(np.abs(wave)) + 1e-8)
         return normalized
     
-    # 获取滤波器参数
+    # Get filter parameters
     config = FILTER_CONFIGS[filter_type]['params']
     
-    # 设计 Butterworth 滤波器
+    # Design Butterworth filter
     b, a = signal.butter(**config)
     
-    # 零相位滤波
+    # Zero-phase filtering
     filtered = signal.filtfilt(b, a, wave)
     
-    # 应用轻微的窗函数（只在边缘衰减）
+    # Apply mild window function (only attenuate edges)
     window = signal.windows.tukey(len(filtered), alpha=0.1)
     filtered = filtered * window
     
-    # 归一化到 [-1, 1]
+    # Normalize to [-1, 1]
     max_val = np.max(np.abs(filtered))
     if max_val > 1e-10:
         filtered = filtered / max_val
@@ -348,28 +348,28 @@ def apply_filter(wave, filter_type='bandpass'):
     return filtered
 ```
 
-**关键步骤解析**：
+**Key Step Analysis**:
 
-1. **滤波器设计** `signal.butter(**config)`
-   - 返回滤波器的分子系数 `b` 和分母系数 `a`
-   - 这些系数定义了差分方程：$y[n] = \sum b_k x[n-k] - \sum a_k y[n-k]$
+1. **Filter Design** `signal.butter(**config)`
+   - Returns filter numerator coefficients `b` and denominator coefficients `a`
+   - These coefficients define the difference equation: $y[n] = \sum b_k x[n-k] - \sum a_k y[n-k]$
 
-2. **零相位滤波** `signal.filtfilt(b, a, wave)`
-   - 正向和反向各滤波一次
-   - 消除相位延迟
-   - 等效滤波器阶数加倍（8阶效果）
+2. **Zero-Phase Filtering** `signal.filtfilt(b, a, wave)`
+   - Filters forward and backward once each
+   - Eliminates phase delay
+   - Equivalent filter order doubled (8th order effect)
 
-3. **窗函数应用** `signal.windows.tukey(len(filtered), alpha=0.1)`
-   - α=0.1 表示只有 10% 的边缘被衰减
-   - 保留了 90% 的信号不受影响
-   - 减少边缘效应
+3. **Window Function Application** `signal.windows.tukey(len(filtered), alpha=0.1)`
+   - α=0.1 means only 10% of edges are attenuated
+   - 90% of signal remains unaffected
+   - Reduces edge effects
 
-4. **归一化**
-   - 将信号幅度归一化到 [-1, 1]
-   - 添加 1e-10 防止除零错误
-   - 便于不同滤波结果的对比
+4. **Normalization**
+   - Normalizes signal amplitude to [-1, 1]
+   - Adds 1e-10 to prevent division by zero
+   - Facilitates comparison of different filtering results
 
-### 5.3 频谱图生成
+### 5.3 Spectrogram Generation
 
 ```python
 def create_spectrogram(wave, transform):
@@ -379,172 +379,172 @@ def create_spectrogram(wave, transform):
     return np.transpose(image, (1, 2, 0))
 ```
 
-**CQT 变换（常数 Q 变换）**：
+**CQT Transform (Constant-Q Transform)**:
 
 ```python
 transform = CQT1992v2(sr=2048, hop_length=64, fmin=20, fmax=500)
 ```
 
-- `sr=2048`：采样率
-- `hop_length=64`：帧移，决定时间分辨率
-- `fmin=20, fmax=500`：频率范围
-- CQT 相比 STFT 的优势：低频分辨率高，更适合音乐和引力波信号
+- `sr=2048`: sampling rate
+- `hop_length=64`: frame shift, determines time resolution
+- `fmin=20, fmax=500`: frequency range
+- CQT advantage over STFT: higher low-frequency resolution, more suitable for music and gravitational wave signals
 
-### 5.4 可视化函数
+### 5.4 Visualization Function
 
 ```python
 def plot_waveform(ax, data, color, title, show_envelope=True, alpha=0.9):
     time = np.linspace(0, 2, len(data))
     ax.plot(time, data, color=color, linewidth=0.6, alpha=alpha)
     
-    # 绘制希尔伯特包络
+    # Draw Hilbert envelope
     if show_envelope and np.std(data) > 0.01:
         analytic = signal.hilbert(data)
         envelope = np.abs(analytic)
         ax.fill_between(time, -envelope, envelope, color=color, alpha=0.1)
     
-    # 动态设置 y 轴范围
+    # Dynamically set y-axis range
     data_range = np.max(np.abs(data))
     ax.set_ylim(-data_range * 1.3, data_range * 1.3)
 ```
 
-**希尔伯特变换与包络**：
-- `signal.hilbert(data)` 计算解析信号
-- 解析信号的模就是信号的包络
-- 包络显示了信号的瞬时幅度变化，对于 chirp 信号特别有用
+**Hilbert Transform and Envelope**:
+- `signal.hilbert(data)` computes the analytic signal
+- The magnitude of the analytic signal is the signal envelope
+- Envelope shows instantaneous amplitude variation, particularly useful for chirp signals
 
 ---
 
-## 六、在引力波探测中的实际应用
+## 6. Practical Applications in Gravitational Wave Detection
 
-### 6.1 数据预处理流程
+### 6.1 Data Preprocessing Pipeline
 
-典型的引力波数据预处理流程：
+Typical gravitational wave data preprocessing pipeline:
 
 ```
-原始数据 (16384Hz)
+Raw Data (16384Hz)
       ↓
-  [降采样至 4096Hz 或 2048Hz]
+  [Downsample to 4096Hz or 2048Hz]
       ↓
-  [带通滤波 20-500Hz]
+  [Bandpass Filter 20-500Hz]
       ↓
-  [白化处理 Whitening]
+  [Whitening]
       ↓
-  [应用窗函数]
+  [Apply Window Function]
       ↓
-  [匹配滤波 / ML 模型]
+  [Matched Filtering / ML Model]
       ↓
-  信号检测结果
+  Signal Detection Result
 ```
 
-### 6.2 白化处理（Whitening）
+### 6.2 Whitening
 
-白化是引力波数据处理中的重要步骤，它使噪声的功率谱密度变得平坦：
+Whitening is an important step in gravitational wave data processing that flattens the noise power spectral density:
 
 $$\tilde{x}_{white}(f) = \frac{\tilde{x}(f)}{\sqrt{S_n(f)}}$$
 
-其中 $S_n(f)$ 是噪声的功率谱密度。
+Where $S_n(f)$ is the noise power spectral density.
 
-白化的作用：
-- 使不同频率的噪声贡献相等
-- 提高匹配滤波的有效性
-- 使信号在所有频率上都有可比较的信噪比
+Functions of whitening:
+- Makes noise contributions equal at different frequencies
+- Improves effectiveness of matched filtering
+- Makes signal have comparable SNR at all frequencies
 
-### 6.3 匹配滤波（Matched Filtering）
+### 6.3 Matched Filtering
 
-匹配滤波是检测已知形状信号的最优方法：
+Matched filtering is the optimal method for detecting signals of known shape:
 
 $$\rho(t) = \int_{-\infty}^{\infty} \frac{\tilde{s}(f) \tilde{h}^*(f)}{S_n(f)} e^{2\pi i f t} df$$
 
-其中：
-- $\tilde{s}(f)$ 是数据的傅里叶变换
-- $\tilde{h}(f)$ 是模板波形的傅里叶变换
-- $S_n(f)$ 是噪声功率谱密度
+Where:
+- $\tilde{s}(f)$ is the Fourier transform of the data
+- $\tilde{h}(f)$ is the Fourier transform of the template waveform
+- $S_n(f)$ is the noise power spectral density
 
-### 6.4 三个探测器的协同分析
+### 6.4 Collaborative Analysis of Three Detectors
 
 ```python
 detector_names = ['LIGO Hanford', 'LIGO Livingston', 'Virgo']
-detector_indices = [1, 2, 0]  # 数据中的索引顺序
+detector_indices = [1, 2, 0]  # Index order in data
 ```
 
-**为什么需要多个探测器**：
-1. **确认信号真实性**：多个探测器同时观测到相似信号
-2. **信号定位**：利用到达时间差确定信号源方向
-3. **降低误报率**：单个探测器的假信号不太可能在其他探测器重现
-4. **参数估计**：多探测器数据可以更精确地估计信号参数
+**Why Multiple Detectors Are Needed**:
+1. **Confirm signal authenticity**: multiple detectors observe similar signals simultaneously
+2. **Signal localization**: use arrival time differences to determine source direction
+3. **Reduce false positive rate**: false signals from single detector unlikely to recur in other detectors
+4. **Parameter estimation**: multi-detector data enables more precise signal parameter estimation
 
 ---
 
-## 七、不同滤波器的效果对比
+## 7. Comparison of Different Filter Effects
 
-### 7.1 有引力波信号 vs 无引力波信号
+### 7.1 With GW Signal vs Without GW Signal
 
-| 特征 | 有 GW 信号 | 无 GW 信号 |
-|-----|----------|----------|
-| 原始信号 | 噪声中可能隐含 chirp | 纯噪声 |
-| 带通滤波后 | chirp 特征更明显 | 仍为噪声 |
-| 窄带滤波后 | 信号最集中 | 噪声减少 |
-| 频谱图 | 可见上升的频率轨迹 | 无明显结构 |
+| Characteristic | With GW Signal | Without GW Signal |
+|---------------|----------------|-------------------|
+| Raw signal | May contain chirp hidden in noise | Pure noise |
+| After bandpass | Chirp features more evident | Still noise |
+| After narrowband | Signal most concentrated | Noise reduced |
+| Spectrogram | Visible rising frequency trajectory | No obvious structure |
 
-### 7.2 滤波器选择指南
+### 7.2 Filter Selection Guide
 
-| 分析目标 | 推荐滤波器 | 原因 |
-|---------|----------|-----|
-| 全频段分析 | 带通 (20-500Hz) | 平衡噪声抑制和信号保留 |
-| 低频信号 | 低通 + 高通组合 | 灵活调整频率范围 |
-| 高信噪比检测 | 窄带 (30-200Hz) | 聚焦核心频段 |
-| 去除低频噪声 | 高通 (20Hz) | 消除地震和漂移 |
-| 特征可视化 | 多滤波器对比 | 全面理解信号特性 |
+| Analysis Goal | Recommended Filter | Reason |
+|--------------|-------------------|--------|
+| Full-band analysis | Bandpass (20-500Hz) | Balance noise suppression and signal retention |
+| Low-frequency signals | Lowpass + Highpass combination | Flexible frequency range adjustment |
+| High SNR detection | Narrowband (30-200Hz) | Focus on core frequency band |
+| Remove low-frequency noise | Highpass (20Hz) | Eliminate seismic and drift |
+| Feature visualization | Multi-filter comparison | Comprehensive understanding of signal characteristics |
 
 ---
 
-## 八、进阶话题
+## 8. Advanced Topics
 
-### 8.1 自适应滤波
+### 8.1 Adaptive Filtering
 
-对于非平稳噪声，可以使用自适应滤波技术，根据噪声特性动态调整滤波器参数。
+For non-stationary noise, adaptive filtering techniques can be used to dynamically adjust filter parameters based on noise characteristics.
 
-### 8.2 小波变换
+### 8.2 Wavelet Transform
 
-小波变换提供了时频分析的能力，特别适合分析 chirp 这类频率随时间变化的信号：
+Wavelet transform provides time-frequency analysis capability, particularly suitable for analyzing chirp-type signals whose frequency varies with time:
 
 $$W(a, b) = \frac{1}{\sqrt{a}} \int x(t) \psi^*\left(\frac{t-b}{a}\right) dt$$
 
-### 8.3 机器学习方法
+### 8.3 Machine Learning Methods
 
-现代引力波检测越来越多地使用深度学习：
-- CNN 用于频谱图分类
-- RNN/LSTM 用于时序信号分析
-- 自编码器用于异常检测
+Modern gravitational wave detection increasingly uses deep learning:
+- CNN for spectrogram classification
+- RNN/LSTM for time series signal analysis
+- Autoencoders for anomaly detection
 
-这些方法可以学习更复杂的特征，但传统滤波仍是数据预处理的基础。
-
----
-
-## 九、总结
-
-滤波器在引力波信号处理中扮演着不可或缺的角色。通过合理选择滤波器类型和参数，我们可以有效地从嘈杂的探测器数据中提取微弱的引力波信号。
-
-**关键要点**：
-
-1. **带通滤波器**是最常用的选择，它能够在保留信号主要频率成分的同时去除大部分噪声
-
-2. **高通和低通滤波器**可以根据具体分析需求单独使用，提供更灵活的频率控制
-
-3. **窄带滤波器**在需要高信噪比的场景中特别有用，能够聚焦于信号最强的频段
-
-4. **零相位滤波**（filtfilt）对于保持信号时间精度至关重要
-
-5. **窗函数**可以减少边缘效应和频谱泄漏
-
-6. **多探测器协同分析**是确认引力波信号真实性的关键
-
-理解这些滤波器的工作原理和应用场景，对于正确处理和分析引力波数据至关重要。随着引力波探测技术的不断发展，更先进的信号处理方法也在被广泛研究和应用，但传统的滤波技术仍然是数据预处理的基础和核心。
+These methods can learn more complex features, but traditional filtering remains the foundation of data preprocessing.
 
 ---
 
-## 参考资料
+## 9. Summary
+
+Filters play an indispensable role in gravitational wave signal processing. By properly selecting filter types and parameters, we can effectively extract weak gravitational wave signals from noisy detector data.
+
+**Key Points**:
+
+1. **Bandpass filter** is the most common choice, capable of retaining the main frequency components of signals while removing most noise
+
+2. **Highpass and lowpass filters** can be used independently according to specific analysis needs, providing more flexible frequency control
+
+3. **Narrowband filter** is particularly useful in scenarios requiring high SNR, focusing on the strongest signal frequency band
+
+4. **Zero-phase filtering** (filtfilt) is crucial for maintaining signal time accuracy
+
+5. **Window functions** can reduce edge effects and spectral leakage
+
+6. **Multi-detector collaborative analysis** is key to confirming the authenticity of gravitational wave signals
+
+Understanding the working principles and application scenarios of these filters is crucial for correctly processing and analyzing gravitational wave data. As gravitational wave detection technology continues to develop, more advanced signal processing methods are being widely researched and applied, but traditional filtering techniques remain the foundation and core of data preprocessing.
+
+---
+
+## References
 
 1. LIGO Scientific Collaboration. "LIGO Data Analysis Guide"
 2. B. P. Abbott et al. "Observation of Gravitational Waves from a Binary Black Hole Merger" (2016)
@@ -554,5 +554,5 @@ $$W(a, b) = \frac{1}{\sqrt{a}} \int x(t) \psi^*\left(\frac{t-b}{a}\right) dt$$
 
 ---
 
-*文档生成时间：2026年3月*
-*代码版本：visual.py*
+*Document generated: March 2026*
+*Code version: visual.py*
