@@ -1,0 +1,40 @@
+{
+  "os": "Windows-10-10.0.26100-SP0",
+  "python": "CPython 3.10.19",
+  "startedAt": "2026-03-13T01:51:29.058072Z",
+  "program": "D:\\Code\\train.py",
+  "codePath": "train.py",
+  "codePathLocal": "train.py",
+  "git": {
+    "remote": "https://github.com/davidduan090324/gravitational-wave-detection.git",
+    "commit": "329fd38c6aa7cc50fe2c11fe2608b4e01f7924a2"
+  },
+  "email": "david.duan090324@gmail.com",
+  "root": "D:\\Code",
+  "host": "david123",
+  "executable": "D:\\Users\\dlq\\miniconda3\\envs\\wave\\python.exe",
+  "cpu_count": 16,
+  "cpu_count_logical": 24,
+  "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "699697983488",
+      "used": "474349416448"
+    }
+  },
+  "memory": {
+    "total": "16944848896"
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA GeForce RTX 4050 Laptop GPU",
+      "memoryTotal": "6439305216",
+      "cudaCores": 2560,
+      "architecture": "Ada",
+      "uuid": "GPU-d9356bd8-8505-4214-91f9-c9757aa8f18e"
+    }
+  ],
+  "cudaVersion": "12.7",
+  "writerId": "jb5u9c7cu8hc4dza9k8f4sy9rrquwn2i"
+}

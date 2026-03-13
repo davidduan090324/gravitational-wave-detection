@@ -1,0 +1,72 @@
+_wandb:
+    value:
+        cli_version: 0.25.1
+        e:
+            hvkp1ax9eyxq1rfifacbmtxwtnv3y62o:
+                codePath: train.py
+                codePathLocal: train.py
+                cpu_count: 16
+                cpu_count_logical: 24
+                cudaVersion: "12.7"
+                disk:
+                    /:
+                        total: "699697983488"
+                        used: "474347687936"
+                email: david.duan090324@gmail.com
+                executable: D:\Users\dlq\miniconda3\envs\wave\python.exe
+                git:
+                    commit: 329fd38c6aa7cc50fe2c11fe2608b4e01f7924a2
+                    remote: https://github.com/davidduan090324/gravitational-wave-detection.git
+                gpu: NVIDIA GeForce RTX 4050 Laptop GPU
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Ada
+                      cudaCores: 2560
+                      memoryTotal: "6439305216"
+                      name: NVIDIA GeForce RTX 4050 Laptop GPU
+                      uuid: GPU-d9356bd8-8505-4214-91f9-c9757aa8f18e
+                host: david123
+                memory:
+                    total: "16944848896"
+                os: Windows-10-10.0.26100-SP0
+                program: D:\Code\train.py
+                python: CPython 3.10.19
+                root: D:\Code
+                startedAt: "2026-03-13T01:44:06.726254Z"
+                writerId: hvkp1ax9eyxq1rfifacbmtxwtnv3y62o
+        m: []
+        python_version: 3.10.19
+        t:
+            "1":
+                - 1
+                - 5
+                - 53
+            "2":
+                - 1
+                - 5
+                - 53
+            "3":
+                - 13
+                - 16
+            "4": 3.10.19
+            "5": 0.25.1
+            "8":
+                - 3
+            "12": 0.25.1
+            "13": windows-amd64
+batch_size:
+    value: 32
+d_ff:
+    value: 256
+d_model:
+    value: 64
+epochs:
+    value: 20
+learning_rate:
+    value: 0.001
+n_heads:
+    value: 4
+n_layers:
+    value: 2
+patch_size:
+    value: 64
