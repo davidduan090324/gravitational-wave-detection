@@ -1,6 +1,6 @@
 # 引力波信号处理中的滤波器原理与应用
 
-![双黑洞合并引力波示意图](example.jpg)
+![双黑洞合并引力波示意图](image/example.jpg)
 
 *图：双黑洞合并产生引力波的示意图。两个黑洞在相互绕转的过程中，会向外辐射引力波，导致时空产生涟漪。*
 
@@ -544,6 +544,96 @@ $$W(a, b) = \frac{1}{\sqrt{a}} \int x(t) \psi^*\left(\frac{t-b}{a}\right) dt$$
 
 ---
 
+## 模型训练
+
+本项目包含多种深度学习模型，用于基于 CQT 频谱图的引力波检测。
+
+### 支持的模型架构
+
+| 模型系列 | 变体 | 说明 |
+|---------|------|------|
+| **EfficientNet** | efficientnet-b0 ~ b7 | 预训练 CNN，精度和速度平衡良好 |
+| **ResNet** | resnet18, resnet34, resnet50, resnet101, resnet152 | 经典残差网络架构 |
+| **Transformer** | transformer-small, transformer, transformer-large | Vision Transformer (ViT)，更高的模型容量上限 |
+| **SimpleCNN** | simple_cnn | 轻量级基线模型 |
+
+### 快速开始
+
+```bash
+# 基本用法（--exp_name 为必需参数）
+python train.py --exp_name "baseline_v1"
+
+# EfficientNet（默认）
+python train.py --exp_name "efficientnet_b0_lr1e4" --epochs 20 --lr 1e-4 --batch_size 64
+
+# ResNet50
+python train.py --exp_name "resnet50_test" --model resnet50
+
+# Vision Transformer
+python train.py --exp_name "transformer_test" --model transformer
+
+# Transformer Large（更高容量，训练较慢）
+python train.py --exp_name "transformer_large_exp" --model transformer-large --lr 5e-5
+
+# Simple CNN 基线
+python train.py --exp_name "simple_cnn_test" --model simple_cnn
+
+# 禁用 wandb 日志
+python train.py --exp_name "local_test" --no_wandb
+```
+
+### 可用参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+|-----|------|-------|------|
+| `--exp_name` | str | **必需** | 实验名称，用于结果目录命名 |
+| `--epochs` | int | 15 | 训练轮数 |
+| `--batch_size` | int | 128 | 批次大小 |
+| `--lr` | float | 1e-4 | 学习率 |
+| `--model` | str | efficientnet-b0 | 模型架构（见上表） |
+| `--no_wandb` | flag | False | 禁用 Weights & Biases 日志 |
+| `--seed` | int | 42 | 随机种子 |
+
+### 模型选择指南
+
+- **EfficientNet-b0**：最佳起点，训练快速且精度良好
+- **ResNet50**：经典架构，行为特性广为人知
+- **Transformer**：更高的容量上限，可能需要更多数据/训练轮数才能收敛
+- **Transformer-large**：在计算预算允许时追求最高精度
+
+### 输出目录结构
+
+每次训练运行会在 `results/` 目录下创建一个带时间戳的目录：
+
+```
+results/
+└── 20260314_221137_baseline_efficientnet/
+    ├── config.json          # 实验配置
+    ├── training.log         # 完整训练日志
+    ├── best_model.pth       # 最佳模型权重
+    ├── metrics.json         # 最终评估指标
+    ├── history.json         # 训练历史数据
+    ├── training_history.png # 训练曲线图
+    ├── confusion_matrix.png # 混淆矩阵
+    └── roc_curve.png        # ROC 曲线
+```
+
+### 项目结构
+
+```
+├── train.py              # 主训练脚本
+├── models/               # 模型架构
+│   ├── __init__.py       # 模型工厂
+│   ├── efficientnet.py   # EfficientNet 模型
+│   ├── resnet.py         # ResNet 模型
+│   ├── transformer.py    # Vision Transformer
+│   └── simple_cnn.py     # Simple CNN 基线
+├── results/              # 训练输出（自动创建）
+└── visual.py             # 可视化工具
+```
+
+---
+
 ## 参考资料
 
 1. LIGO Scientific Collaboration. "LIGO Data Analysis Guide"
@@ -555,4 +645,4 @@ $$W(a, b) = \frac{1}{\sqrt{a}} \int x(t) \psi^*\left(\frac{t-b}{a}\right) dt$$
 ---
 
 *文档生成时间：2026年3月*
-*代码版本：visual.py*
+*代码版本：visual.py, train.py*

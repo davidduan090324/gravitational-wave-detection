@@ -46,3 +46,9 @@ Thumbs.db
 
 # 日志文件
 *.log
+
+# 训练结果
+results/
+
+# Weights & Biases
+wandb/

@@ -1,6 +1,6 @@
 # Filter Principles and Applications in Gravitational Wave Signal Processing
 
-![Binary Black Hole Coalescence](example.jpg)
+![Binary Black Hole Coalescence](image/example.jpg)
 
 *Figure: Illustration of gravitational wave generation from binary black hole coalescence. As two black holes orbit each other, they radiate gravitational waves, creating ripples in spacetime.*
 
@@ -544,6 +544,96 @@ Understanding the working principles and application scenarios of these filters 
 
 ---
 
+## Model Training
+
+This project includes multiple deep learning models for gravitational wave detection using CQT spectrograms.
+
+### Supported Model Architectures
+
+| Model Family | Variants | Description |
+|-------------|----------|-------------|
+| **EfficientNet** | efficientnet-b0 ~ b7 | Pre-trained CNN, good balance of accuracy and speed |
+| **ResNet** | resnet18, resnet34, resnet50, resnet101, resnet152 | Classic residual network architecture |
+| **Transformer** | transformer-small, transformer, transformer-large | Vision Transformer (ViT), higher model capacity ceiling |
+| **SimpleCNN** | simple_cnn | Lightweight baseline model |
+
+### Quick Start
+
+```bash
+# Basic usage (--exp_name is required)
+python train.py --exp_name "baseline_v1"
+
+# EfficientNet (default)
+python train.py --exp_name "efficientnet_b0_lr1e4" --epochs 20 --lr 1e-4 --batch_size 64
+
+# ResNet50
+python train.py --exp_name "resnet50_test" --model resnet50
+
+# Vision Transformer
+python train.py --exp_name "transformer_test" --model transformer
+
+# Transformer Large (higher capacity, slower training)
+python train.py --exp_name "transformer_large_exp" --model transformer-large --lr 5e-5
+
+# Simple CNN baseline
+python train.py --exp_name "simple_cnn_test" --model simple_cnn
+
+# Disable wandb logging
+python train.py --exp_name "local_test" --no_wandb
+```
+
+### Available Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `--exp_name` | str | **Required** | Experiment name for result directory |
+| `--epochs` | int | 15 | Number of training epochs |
+| `--batch_size` | int | 128 | Batch size |
+| `--lr` | float | 1e-4 | Learning rate |
+| `--model` | str | efficientnet-b0 | Model architecture (see table above) |
+| `--no_wandb` | flag | False | Disable Weights & Biases logging |
+| `--seed` | int | 42 | Random seed |
+
+### Model Selection Guide
+
+- **EfficientNet-b0**: Best starting point, fast training with good accuracy
+- **ResNet50**: Classic architecture, well-understood behavior
+- **Transformer**: Higher capacity ceiling, may need more data/epochs to converge
+- **Transformer-large**: Best for maximum accuracy when compute budget allows
+
+### Output Directory Structure
+
+Each training run creates a timestamped directory in `results/`:
+
+```
+results/
+└── 20260314_221137_baseline_efficientnet/
+    ├── config.json          # Experiment configuration
+    ├── training.log         # Complete training log
+    ├── best_model.pth       # Best model checkpoint
+    ├── metrics.json         # Final evaluation metrics
+    ├── history.json         # Training history data
+    ├── training_history.png # Training curves
+    ├── confusion_matrix.png # Confusion matrix
+    └── roc_curve.png        # ROC curve
+```
+
+### Project Structure
+
+```
+├── train.py              # Main training script
+├── models/               # Model architectures
+│   ├── __init__.py       # Model factory
+│   ├── efficientnet.py   # EfficientNet models
+│   ├── resnet.py         # ResNet models
+│   ├── transformer.py    # Vision Transformer
+│   └── simple_cnn.py     # Simple CNN baseline
+├── results/              # Training outputs (auto-created)
+└── visual.py             # Visualization utilities
+```
+
+---
+
 ## References
 
 1. LIGO Scientific Collaboration. "LIGO Data Analysis Guide"
@@ -555,4 +645,4 @@ Understanding the working principles and application scenarios of these filters 
 ---
 
 *Document generated: March 2026*
-*Code version: visual.py*
+*Code version: visual.py, train.py*
