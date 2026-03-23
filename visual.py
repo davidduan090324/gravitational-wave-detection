@@ -1,3 +1,6 @@
+import os
+from datetime import datetime
+
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
@@ -8,18 +11,25 @@ from nnAudio.Spectrogram import CQT1992v2
 import torch
 
 warnings.filterwarnings("ignore")
-plt.style.use('dark_background')
+
+OUTPUT_DIR = os.path.join(
+    r"D:\Code",
+    "results",
+    "visualizations",
+    datetime.now().strftime("%Y%m%d_%H%M%S"),
+)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 train_labels = pd.read_csv(r"D:\Code\g2net-gravitational-wave-detection\training_labels.csv")
 sample_submission = pd.read_csv(r"D:\Code\g2net-gravitational-wave-detection\sample_submission.csv")
 
 COLORS = {
-    'raw': '#FFFFFF',
+    'raw': '#111111',
     'hanford': '#00D4FF',
     'livingston': '#FF6B6B', 
     'virgo': '#50FA7B',
     'accent': '#BD93F9',
-    'grid': '#44475A',
+    'grid': '#D0D0D0',
     'bandpass': '#00D4FF',
     'highpass': '#FF6B6B',
     'lowpass': '#50FA7B',
@@ -98,25 +108,25 @@ def plot_waveform(ax, data, color, title, show_envelope=True, alpha=0.9):
         analytic = signal.hilbert(data)
         envelope = np.abs(analytic)
         ax.fill_between(time, -envelope, envelope, color=color, alpha=0.1)
-    ax.set_facecolor('#1E1E2E')
-    ax.set_title(title, fontsize=9, color='white', fontweight='bold', pad=6)
+    ax.set_facecolor('white')
+    ax.set_title(title, fontsize=9, color='black', fontweight='bold', pad=6)
     ax.set_xlim(0, 2)
     
     # 动态设置 y 轴范围
     data_range = np.max(np.abs(data))
     ax.set_ylim(-data_range * 1.3, data_range * 1.3)
     
-    ax.grid(True, alpha=0.2, color=COLORS['grid'])
-    ax.tick_params(colors='gray', labelsize=6)
+    ax.grid(True, alpha=0.5, color=COLORS['grid'])
+    ax.tick_params(colors='black', labelsize=6)
     for spine in ax.spines.values():
         spine.set_color(COLORS['grid'])
         spine.set_linewidth(0.5)
 
 def plot_spectrogram(ax, image, title):
     im = ax.imshow(image, aspect='auto', cmap='magma', origin='lower')
-    ax.set_facecolor('#1E1E2E')
-    ax.set_title(title, fontsize=9, color='white', fontweight='bold', pad=6)
-    ax.tick_params(colors='gray', labelsize=6)
+    ax.set_facecolor('white')
+    ax.set_title(title, fontsize=9, color='black', fontweight='bold', pad=6)
+    ax.tick_params(colors='black', labelsize=6)
     for spine in ax.spines.values():
         spine.set_color(COLORS['grid'])
         spine.set_linewidth(0.5)
@@ -127,7 +137,7 @@ def visualize_filter_comparison(idx, is_train=True):
     wave_data = np.load(id2path(idx, is_train))
     
     fig = plt.figure(figsize=(20, 14))
-    fig.patch.set_facecolor('#0D0D1A')
+    fig.patch.set_facecolor('white')
     
     # 5行（raw + 4个滤波器）x 4列（3个探测器 + 频谱图）
     filter_types = ['raw', 'bandpass', 'highpass', 'lowpass', 'narrow_band']
@@ -161,7 +171,7 @@ def visualize_filter_comparison(idx, is_train=True):
     
     status = "GW Detected" if train_labels[train_labels['id'] == idx]['target'].values[0] == 1 else "No GW"
     fig.suptitle(f'Gravitational Wave Analysis - Filter Comparison\nSample: {idx} | Status: {status}', 
-                 fontsize=14, color='white', fontweight='bold', y=0.98)
+                 fontsize=14, color='black', fontweight='bold', y=0.98)
     
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     return fig
@@ -172,7 +182,7 @@ def visualize_single_detector_filters(idx, detector_idx=1, is_train=True):
     raw_wave = wave_data[detector_idx, :]
     
     fig, axes = plt.subplots(2, 3, figsize=(18, 10))
-    fig.patch.set_facecolor('#0D0D1A')
+    fig.patch.set_facecolor('white')
     
     filter_types = ['raw', 'bandpass', 'highpass', 'lowpass', 'narrow_band']
     
@@ -199,18 +209,21 @@ def visualize_single_detector_filters(idx, detector_idx=1, is_train=True):
         ax_overlay.plot(time, filtered, color=filter_info['color'], 
                        linewidth=lw, alpha=alpha, label=filter_info['name'])
     
-    ax_overlay.set_facecolor('#1E1E2E')
-    ax_overlay.set_title('All Filters Overlay', fontsize=9, color='white', fontweight='bold', pad=6)
+    ax_overlay.set_facecolor('white')
+    ax_overlay.set_title('All Filters Overlay', fontsize=9, color='black', fontweight='bold', pad=6)
     ax_overlay.set_xlim(0, 2)
     ax_overlay.set_ylim(-1.3, 1.3)
-    ax_overlay.grid(True, alpha=0.2, color=COLORS['grid'])
+    ax_overlay.grid(True, alpha=0.5, color=COLORS['grid'])
     ax_overlay.legend(loc='upper right', fontsize=7, framealpha=0.3)
-    ax_overlay.tick_params(colors='gray', labelsize=6)
+    ax_overlay.tick_params(colors='black', labelsize=6)
+    for spine in ax_overlay.spines.values():
+        spine.set_color(COLORS['grid'])
+        spine.set_linewidth(0.5)
     
     detector_name = ['Virgo', 'LIGO Hanford', 'LIGO Livingston'][detector_idx]
     status = "GW Detected" if train_labels[train_labels['id'] == idx]['target'].values[0] == 1 else "No GW"
     fig.suptitle(f'Filter Comparison - {detector_name}\nSample: {idx} | Status: {status}', 
-                 fontsize=14, color='white', fontweight='bold', y=0.98)
+                 fontsize=14, color='black', fontweight='bold', y=0.98)
     
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     return fig
@@ -218,7 +231,7 @@ def visualize_single_detector_filters(idx, detector_idx=1, is_train=True):
 def visualize_gw_comparison(target_idx, no_target_idx):
     """对比有引力波和无引力波的信号，包含原始信号"""
     fig = plt.figure(figsize=(22, 16))
-    fig.patch.set_facecolor('#0D0D1A')
+    fig.patch.set_facecolor('white')
     
     # 5行 x 6列布局
     gs = GridSpec(5, 6, figure=fig, hspace=0.45, wspace=0.3, 
@@ -268,10 +281,17 @@ def visualize_gw_comparison(target_idx, no_target_idx):
         plot_spectrogram(ax_spec_filt, spec_filt, f"Filtered Spectrogram - {label}")
     
     fig.suptitle('Gravitational Wave Detection: Raw vs Filtered Signal Comparison', 
-                 fontsize=16, color='white', fontweight='bold', y=0.98)
+                 fontsize=16, color='black', fontweight='bold', y=0.98)
     
     plt.tight_layout(rect=[0, 0, 1, 0.96])
     return fig
+
+
+def save_figure(fig, filename):
+    save_path = os.path.join(OUTPUT_DIR, filename)
+    fig.savefig(save_path, dpi=200, bbox_inches='tight', facecolor=fig.get_facecolor())
+    print(f"Saved figure: {save_path}")
+    return save_path
 
 if __name__ == "__main__":
     targets = train_labels[train_labels["target"] == 1]["id"].head(2).values
@@ -279,11 +299,17 @@ if __name__ == "__main__":
     
     print("Generating Filter Comparison - GW Detected...")
     fig1 = visualize_filter_comparison(targets[0], is_train=True)
+    save_figure(fig1, "filter_comparison_gw_detected.png")
     
     print("Generating Filter Comparison - No GW...")
     fig2 = visualize_filter_comparison(no_targets[0], is_train=True)
+    save_figure(fig2, "filter_comparison_no_gw.png")
     
     print("Generating GW vs No-GW Comparison (Raw + Filtered)...")
     fig3 = visualize_gw_comparison(targets[0], no_targets[0])
-    
-    plt.show()
+    save_figure(fig3, "gw_vs_no_gw_comparison.png")
+
+    plt.close(fig1)
+    plt.close(fig2)
+    plt.close(fig3)
+    print(f"All figures saved to: {OUTPUT_DIR}")

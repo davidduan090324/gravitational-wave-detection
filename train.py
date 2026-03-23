@@ -58,9 +58,16 @@ AVAILABLE_MODELS = [
     'resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152',
     # Transformer family
     'transformer', 'transformer-small', 'transformer-base', 'transformer-large',
+    'transformer_small', 'transformer_base', 'transformer_large',
     # Simple CNN
     'simple_cnn'
 ]
+
+MODEL_ALIASES = {
+    'transformer_small': 'transformer-small',
+    'transformer_base': 'transformer-base',
+    'transformer_large': 'transformer-large',
+}
 
 
 def parse_args():
@@ -72,14 +79,19 @@ def parse_args():
     
     # Optional arguments
     parser.add_argument('--epochs', type=int, default=15, help='Number of epochs')
-    parser.add_argument('--batch_size', type=int, default=128, help='Batch size')
+    parser.add_argument('--batch_size', type=int, default=256, help='Batch size')
     parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate')
     parser.add_argument('--model', type=str, default='efficientnet-b0', 
                         choices=AVAILABLE_MODELS,
                         help='Model architecture. Options: efficientnet-b0~b7, resnet18/34/50/101/152, '
                              'transformer/transformer-small/transformer-large, simple_cnn')
+    parser.add_argument('--pretrained', dest='pretrained', action='store_true',
+                        help='Use pretrained backbone weights when available')
+    parser.add_argument('--no_pretrained', dest='pretrained', action='store_false',
+                        help='Disable pretrained backbone weights')
     parser.add_argument('--no_wandb', action='store_true', help='Disable wandb logging')
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
+    parser.set_defaults(pretrained=True)
     
     return parser.parse_args()
 
@@ -105,11 +117,12 @@ class Config:
         self.cqt_hop_length = 32
         
         # Model
-        self.model_name = args.model if args else "efficientnet-b0"
-        self.pretrained = True
+        raw_model_name = args.model if args else "efficientnet-b0"
+        self.model_name = MODEL_ALIASES.get(raw_model_name, raw_model_name)
+        self.pretrained = args.pretrained if args else True
         
         # Training
-        self.batch_size = args.batch_size if args else 128
+        self.batch_size = args.batch_size if args else 256
         self.epochs = args.epochs if args else 15
         self.learning_rate = args.lr if args else 1e-4
         self.weight_decay = 1e-5
@@ -151,6 +164,7 @@ class Config:
             "exp_name": self.exp_name,
             "timestamp": self.timestamp,
             "model_name": self.model_name,
+            "pretrained": self.pretrained,
             "batch_size": self.batch_size,
             "epochs": self.epochs,
             "learning_rate": self.learning_rate,
@@ -646,6 +660,7 @@ def main():
     print("=" * 60)
     print(f"Device: {config.device}")
     print(f"Model: {config.model_name}")
+    print(f"Pretrained: {config.pretrained}")
     print(f"Batch Size: {config.batch_size}")
     print(f"Epochs: {config.epochs}")
     print(f"Learning Rate: {config.learning_rate}")
@@ -663,6 +678,7 @@ def main():
             config={
                 "exp_name": config.exp_name,
                 "model": config.model_name,
+                "pretrained": config.pretrained,
                 "batch_size": config.batch_size,
                 "learning_rate": config.learning_rate,
                 "epochs": config.epochs,
@@ -735,7 +751,14 @@ def main():
     
     # Loss, Optimizer, Scheduler
     criterion = F.binary_cross_entropy_with_logits
-    optimizer = Adam(model.parameters(), lr=config.learning_rate)
+    if config.model_name.startswith('transformer'):
+        optimizer = AdamW(
+            model.parameters(),
+            lr=config.learning_rate,
+            weight_decay=config.weight_decay
+        )
+    else:
+        optimizer = Adam(model.parameters(), lr=config.learning_rate)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, T_max=config.epochs, eta_min=1e-6
     )

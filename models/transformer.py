@@ -1,12 +1,15 @@
 """
-Vision Transformer (ViT) model for Gravitational Wave Detection
-Transformer architecture for CQT spectrogram classification
+Vision Transformer (ViT) model for Gravitational Wave Detection.
+
+Supports:
+- Custom lightweight ViT for transformer-small
+- Torchvision pretrained ViT backbones for transformer/base/large
 """
 
-import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision.models as tv_models
 
 
 class PatchEmbedding(nn.Module):
@@ -108,7 +111,7 @@ class TransformerBlock(nn.Module):
         return x
 
 
-class GWTransformer(nn.Module):
+class CustomTransformer(nn.Module):
     """
     Vision Transformer (ViT) for Gravitational Wave Detection.
     
@@ -236,3 +239,81 @@ class GWTransformer(nn.Module):
         
         out = self.head(cls_output)
         return out.squeeze(-1)
+
+
+class TorchvisionViT(nn.Module):
+    """Torchvision ViT wrapper with optional pretrained weights."""
+
+    VIT_CONFIGS = {
+        'transformer': ('vit_b_16', tv_models.ViT_B_16_Weights.IMAGENET1K_V1),
+        'transformer-base': ('vit_b_16', tv_models.ViT_B_16_Weights.IMAGENET1K_V1),
+        'transformer-large': ('vit_l_16', tv_models.ViT_L_16_Weights.IMAGENET1K_V1),
+    }
+
+    def __init__(self, config):
+        super().__init__()
+
+        model_name = getattr(config, 'model_name', 'transformer')
+        pretrained = getattr(config, 'pretrained', True)
+
+        if model_name not in self.VIT_CONFIGS:
+            model_name = 'transformer'
+
+        vit_name, weights_enum = self.VIT_CONFIGS[model_name]
+        weights = weights_enum if pretrained else None
+
+        if vit_name == 'vit_b_16':
+            self.backbone = tv_models.vit_b_16(weights=weights)
+        elif vit_name == 'vit_l_16':
+            self.backbone = tv_models.vit_l_16(weights=weights)
+        else:
+            raise ValueError(f"Unsupported ViT model: {vit_name}")
+
+        hidden_dim = self.backbone.heads.head.in_features
+        self.backbone.heads.head = nn.Linear(hidden_dim, 1)
+
+        self.register_buffer(
+            "imagenet_mean",
+            torch.tensor([0.485, 0.456, 0.406], dtype=torch.float32).view(1, 3, 1, 1)
+        )
+        self.register_buffer(
+            "imagenet_std",
+            torch.tensor([0.229, 0.224, 0.225], dtype=torch.float32).view(1, 3, 1, 1)
+        )
+        self.use_input_norm = pretrained
+
+    def forward(self, x):
+        # Resize CQT images to ViT input size.
+        x = F.interpolate(x, size=(224, 224), mode='bilinear', align_corners=False)
+
+        # Match the distribution expected by pretrained ImageNet ViT weights.
+        if self.use_input_norm:
+            x = (x - self.imagenet_mean) / self.imagenet_std
+
+        out = self.backbone(x)
+        return out.squeeze(-1) if out.dim() > 1 else out
+
+
+class GWTransformer(nn.Module):
+    """
+    Transformer model selector.
+
+    - `transformer-small`: custom lightweight ViT from scratch
+    - `transformer` / `transformer-base`: torchvision ViT-B/16
+    - `transformer-large`: torchvision ViT-L/16
+    """
+
+    def __init__(self, config):
+        super().__init__()
+
+        model_name = getattr(config, 'model_name', 'transformer')
+
+        if model_name == 'transformer-small':
+            if getattr(config, 'pretrained', True):
+                print("Warning: pretrained weights are not available for transformer-small; using random initialization.")
+            self.model = CustomTransformer(config)
+        else:
+            self.model = TorchvisionViT(config)
+
+    def forward(self, x):
+        return self.model(x)
